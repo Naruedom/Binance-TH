@@ -7,16 +7,48 @@ import vuetify from './plugins/vuetify';
 import axios from 'axios'
 import config from "../config.js";
 import numeral from 'numeral'
-
+import Binance from 'binance-api-node';
 
 /* ---- */
 
 Vue.prototype.$config = config;
 Vue.prototype.$http = axios;
 
+// const time = new Date().getTime();
+// Vue.prototype.$binance = Binance(
+
+/* //////////////////////////////////////// */
+
+let client = Binance(
+  {
+    apiKey: config.setting.apiKey,
+    apiSecret: config.setting.secretKey,
+    // getTime: time
+  }
+);
+
+client.book({ symbol: 'ETHBTC' }).then(res => console.log('book', res));
+
+// client.accountInfo().then(res => console.log('accountInfo', res));
+
+
+/* //////////////////////////////////////// */
+
+// client.exchangeInfo().then(res => console.log('exchangeInfo', res));
+// client.allOrders({ symbol: 'ETHBTC' }).then(res => console.log('allOrders', res));
+// client.time().then(time => console.log(time))
+
+//  client.ws.user(msg => {
+//   console.log(msg)
+// })
+
+// client.accountInfo()
+//   .then((res) => { console.log("res", res); })
+//   .catch((error) => { console.log("error", error); });
+
 Vue.filter("price", (value) => {
   const number = parseFloat(value);
-  if(number>9)
+  if (number > 9)
     return numeral(value).format("0,0.00");
   else
     return numeral(value).format("0,0.00000");
@@ -25,7 +57,7 @@ Vue.filter("price", (value) => {
 /* ---- */
 
 
-Vue.config.productionTip = false;
+Vue.config.prouctionTip = false;
 
 
 new Vue({
