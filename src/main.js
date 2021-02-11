@@ -15,11 +15,11 @@ Vue.prototype.$config = config;
 Vue.prototype.$http = axios;
 
 // const time = new Date().getTime();
-// Vue.prototype.$binance = Binance(
+Vue.prototype.$binance = Binance(
 
 /* //////////////////////////////////////// */
 
-let client = Binance(
+// let client = Binance(
   {
     apiKey: config.setting.apiKey,
     apiSecret: config.setting.secretKey,
@@ -27,7 +27,7 @@ let client = Binance(
   }
 );
 
-client.book({ symbol: 'ETHBTC' }).then(res => console.log('book', res));
+// client.book({ symbol: 'ETHBTC' }).then(res => console.log('book', res));
 
 // client.accountInfo().then(res => console.log('accountInfo', res));
 

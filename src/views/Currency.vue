@@ -1,22 +1,100 @@
 <template>
   <div class="currency pa-5">
-    <!-- currency -->
-    <v-row dense>
-      <v-col
-        cols="6"
-        md="4"
-        xl="3"
-        lg="2"
-        v-for="(ticker, i) in tickers"
-        :key="i"
+    <v-card>
+      <v-card-title>
+        <v-text-field
+          v-model="search"
+          append-icon="mdi-magnify"
+          label="Search"
+          single-line
+          hide-details
+        ></v-text-field>
+      </v-card-title>
+      <v-data-table
+        :loading="isLoading"
+        loading-text="Loading..."
+        :headers="headers"
+        :items="desserts"
+        :search="search"
+        hide-default-footer
+        :items-per-page="1000"
       >
-        <!-- <b href="https://www.w3schools.com" target="_blank"> -->
-        <v-card
+        <template v-slot:item.symbolA="{ item }">
+          <div class="primary--text font-weight-bold-x text-h5">{{ item.symbolA }}</div>
+        </template>
+        <template v-slot:item.lastPrice="{ item }">
+          <div :class="item.priceStatus == -1 ? 'red--text' : 'success--text'">
+          <!-- {{item.priceStatus}} -->
+            $ {{ item.lastPrice | price }}
+          </div>
+        </template>
+        
+        <template v-slot:item.lastPrice2="{ item }">
+          <div :class="item.priceStatus == -1 ? 'red--text' : 'success--text'">
+            ฿ {{ (item.lastPrice * usd) | price }}
+          </div>
+        </template>
+
+        <template v-slot:item.priceChangePercent="{ item }">
+          <v-chip small label text-color="white" :color="parseFloat(item.priceChangePercent) >= 0? 'green': 'red'">
+            <v-icon v-if="parseFloat(item.priceChangePercent) >= 0" x-small left>mdi-arrow-up-bold</v-icon>
+            <v-icon v-else x-small left>mdi-arrow-down-bold</v-icon>
+            {{ item.priceChangePercent }} %
+          </v-chip>
+        </template>
+        <template v-slot:item.highPrice="{ item }">
+          <div class="success--text">$ {{ item.highPrice | price }}</div>
+        </template>
+
+        <template v-slot:item.lowPrice="{ item }">
+          <div class="red--text">$ {{ item.lowPrice | price }}</div>
+        </template>
+
+        <template v-slot:item.volume="{ item }">
+          <div class="grey--text">
+            {{ item.volume | price }}
+          </div>
+        </template>
+
+        <!-- <template v-slot:item.hit="{ item }">
+          <div class="grey--text">
+            {{item.hit}}
+          </div>
+        </template> -->
+
+        <template v-slot:item.action="{ item }">
+          <v-btn
+            small
+            text
+            color="primary"
+            link
+            target="_blank"
+            :href="
+              'https://www.binance.com/th/trade/' +
+              item.symbolA +
+              '_USDT?layout=pro'
+            "
+            title="เทรด"
+          >
+            <v-icon left>mdi-chart-areaspline</v-icon> เทรด
+          </v-btn>
+        </template>
+      </v-data-table>
+    </v-card>
+
+    <!-- currency -->
+    <!-- <v-row dense> -->
+    <!-- md="4"
+        xl="3"
+        lg="2" -->
+    <!-- <v-col cols="6" v-for="(currency, i) in currencys" :key="i"> -->
+    <!-- <b href="https://www.w3schools.com" target="_blank"> -->
+    <!-- <v-card
           class="pa-5"
           link
           :href="
             'https://www.binance.com/th/trade/' +
-            ticker.symbolA +
+            currency.symbolA +
             '_USDT?layout=pro'
           "
           target="_blank"
@@ -24,34 +102,39 @@
           <v-row dense class="text-center">
             <v-col cols="4" align-self="center">
               <div class="font-weight-medium primary--text">
-                {{ ticker.symbolA }}
+                {{ currency.symbolA }}
               </div>
-              <!-- <div>{{ ticker.symbol }}</div> -->
+              <div>{{ currency.symbol }}</div>
             </v-col>
             <v-col cols="8">
               <v-row dense class="text-right">
-                <v-col cols="12">
+                <v-col>
                   <div
                     class="font-weight-black"
                     :class="
-                      ticker.priceStatus == -1 ? 'error--text' : 'success--text'
+                      currency.priceStatus == -1 ? 'red--text' : 'success--text'
                     "
                   >
-                    $ {{ ticker.price | price }}
+                    $ {{ currency.price | price }}
                   </div>
                 </v-col>
-                <v-col cols="12">
+                <v-col>
                   <div class="font-weight-thin secondary--text">
-                    ฿ {{ (ticker.price * usd) | price }}
+                    ฿ {{ (currency.price * usd) | price }}
                   </div>
+                </v-col>
+                <v-col>
+                  {{currency.priceChangePercent}} %
                 </v-col>
               </v-row>
             </v-col>
           </v-row>
-        </v-card>
-        <!-- </a>  -->
-      </v-col>
-    </v-row>
+        </v-card> -->
+
+    <!-- </a>  -->
+
+    <!-- </v-col> -->
+    <!-- </v-row> -->
   </div>
 </template>
 
@@ -64,13 +147,38 @@ export default {
     return {
       usd: 30,
       exchanges: [],
+      currencys: [],
       tickers: [],
       connection: null,
+
+      /* START: DATA TABLE */
+      isLoading: true,
+      search: "",
+      headers: [
+        {
+          text: "เหรียญ",
+          // align: "start",
+          filterable: true,
+          value: "symbolA",
+          width: "200",
+        },
+        { text: "ราคา", value: "lastPrice" },
+        { text: "บาท", value: "lastPrice2" },
+        { text: "24h", value: "priceChangePercent" },
+        { text: "High", value: "highPrice" },
+        { text: "Low", value: "lowPrice" },
+        // { text: "Hit", value: "hit" },
+        { text: "Volume", value: "volume" },
+        { text: "", value: "action" },
+      ],
+      desserts: [],
+      /* END: DATA TABLE */
     };
   },
   mounted() {
     // this.getUSD();
     // this.getTrades();
+    this.dailyStats();
     // this.getTicker();
     // this.getOpenOrders();
   },
@@ -83,9 +191,28 @@ export default {
       })
     }, */
 
+    async dailyStats() {
+      // const d = await this.$binance.trades({ symbol: 'ETHBTC' });
+      const data = await this.$binance.dailyStats();
+      // console.log("dailyStats", data);
+
+      const usdtList = data
+        .filter((t) => t.symbol.substr(t.symbol.length - 4) == "USDT")
+        .map((t) => {
+          return {
+            symbolA: t.symbol.substring(t.symbol.length - 4, 0),
+            symbolB: t.symbol.substr(-4),
+            oldPrice: 0,
+            ...t,
+          };
+        });
+      this.desserts = usdtList;
+      this.isLoading = false;
+
+      this.streem();
+    },
+
     getOpenOrders() {
-
-
       // const url = 'https://api.binance.com/api/v3/allOrders?symbol=ETHBTC&timestamp=1612509948544&signature=1e3cb6f02da48bc450ac7f2bdc83848fd50d576f125fffe3bdf1723f526a4dfc';
       // this.$http({
       //   method: "get",
@@ -98,7 +225,6 @@ export default {
       //   .catch((error) => {
       //     console.log("error", error);
       //   });
-
       // this.$binance
       //   .allOrders({ symbol: "ETHBTC" })
       //   .then((res) => {
@@ -110,14 +236,12 @@ export default {
     },
 
     getTicker() {
-
       // let client = Binance(
       //   {
       //     apiKey: this.$config.setting.apiKey,
       //     apiSecret: this.$config.setting.secretKey,
       //   }
       // );
-
       // client.ws.ticker('ETHBTC', ticker => {
       //   console.log('ticker',ticker)
       // })
@@ -142,10 +266,11 @@ export default {
                 high: "",
                 low: "",
                 priceStatus: 0,
+                hit: 0,
               };
             });
           this.tickers = eth;
-          this.streem();
+          // this.streem();
         })
         .catch((error) => {
           console.log("error", error);
@@ -153,31 +278,52 @@ export default {
     },
     streem() {
       this.connection = new WebSocket(
-        `${this.$config.setting.wss}/ws/!miniTicker@arr`
+        `${this.$config.setting.wss}/ws/!ticker@arr`
+        // `${this.$config.setting.wss}/ws/!miniTicker@arr`
       );
 
       this.connection.onmessage = (event) => {
         let tickers = JSON.parse(event.data);
+        // console.log(tickers);
+        // return;
+        tickers = tickers.filter((t) => t.s.substr(t.s.length - 4) == "USDT");
 
-        tickers = tickers.filter((t) => t.s.substr(t.s.length - 4) == "TUSD");
-
+        let currencys = this.desserts;
+        
         tickers.forEach((t) => {
-          this.tickers.forEach((g_ticker, g_i) => {
+          currencys.forEach((g_ticker, g_i) => {
             if (t.s == g_ticker.symbol) {
-              const oldPrice = this.tickers[g_i].prict;
+              const oldPrice = parseFloat(currencys[g_i].lastPrice);
 
-              if (oldPrice == t.c) this.tickers[g_i].priceStatus = 0;
-              else if (oldPrice < t.c) this.tickers[g_i].priceStatus = 1;
-              else this.tickers[g_i].priceStatus = -1;
+              if ((oldPrice) == parseFloat(t.c)) currencys[g_i].priceStatus = 0;
+              else if (oldPrice < parseFloat(t.c)) currencys[g_i].priceStatus = 1;
+              else currencys[g_i].priceStatus = -1;
 
-              this.tickers[g_i].price = t.c;
-              this.tickers[g_i].high = t.h;
-              this.tickers[g_i].low = t.l;
+              // const oldHit = parseInt(currencys[g_i].hit);
+              // let hit = 0;
+              // if(currencys[g_i].priceStatus==1) {
+              //   if(oldHit<0)
+              //     hit = 1;
+              //   else hit++;
+              // }
+              // else if(currencys[g_i].priceStatus==-1) {
+              //   if(oldHit>0)
+              //     hit = -1;
+              //   else hit--;
+              // }
 
-              console.log(this.tickers[g_i]);
+              currencys[g_i].lastPrice = t.c;
+              currencys[g_i].highPrice = t.h;
+              currencys[g_i].lowPrice = t.l;
+              currencys[g_i].priceChangePercent = t.P;
+              // currencys[g_i].hit = hit;
+
+              // console.log(this.tickers[g_i]);
             }
           });
         });
+
+        this.desserts = currencys;
       };
 
       this.connection.onopen = (event) => {
