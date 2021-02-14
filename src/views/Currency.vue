@@ -109,7 +109,7 @@
             :href="
               'https://www.binance.com/th/trade/' +
               item.symbolA +
-              '_USDT?layout=pro'
+              '_USDT?layout=pro&ref=ODBA01CZ'
             "
             title="เทรด"
           >
@@ -204,10 +204,10 @@ export default {
         },
         { text: "ราคา", value: "lastPrice" },
         { text: "บาท", value: "lastPrice2" },
-        { text: "24H", value: "priceChangePercent", filterable: false },
-        { text: "2 Day", value: "chart", width: "250" },
-        { text: "High", value: "highPrice", width: "100" },
-        { text: "Low", value: "lowPrice", width: "100" },
+        { text: "24H", value: "priceChangePercent", width: "50" },
+        { text: "2 Day", value: "chart", width: "250", filterable: false },
+        { text: "High", value: "highPrice", width: "110" },
+        { text: "Low", value: "lowPrice", width: "110" },
         // { text: "Hit", value: "hit" },
         { text: "Volume", value: "volume", width: "120" },
         { text: "", value: "action" },
