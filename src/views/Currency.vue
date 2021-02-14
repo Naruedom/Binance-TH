@@ -1,14 +1,26 @@
 <template>
-  <div class="currency pa-5">
+  <div class="currency pa-5 pt-1">
     <v-card>
       <v-card-title>
-        <v-text-field
-          v-model="search"
-          append-icon="mdi-magnify"
-          label="Search"
-          single-line
-          hide-details
-        ></v-text-field>
+        <v-row>
+          <v-col cols="6">
+            <v-icon color="green" left>mdi-arrow-up-bold</v-icon>
+            <span class="green--text">{{ desserts.length - countDown }}</span>
+            <span class="mx-5"></span>
+            <v-icon color="red" left>mdi-arrow-down-bold</v-icon>
+            <span class="red--text">{{ countDown }}</span>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="search"
+              append-icon="mdi-magnify"
+              label="Search"
+              dense
+              single-line
+              hide-details
+            ></v-text-field>
+          </v-col>
+        </v-row>
       </v-card-title>
       <v-data-table
         :loading="isLoading"
@@ -16,19 +28,21 @@
         :headers="headers"
         :items="desserts"
         :search="search"
-        hide-default-footer
-        :items-per-page="1000"
+        :hide-default-footer="false"
+        :items-per-page="15"
       >
         <template v-slot:item.symbolA="{ item }">
-          <div class="primary--text font-weight-bold-x text-h5">{{ item.symbolA }}</div>
+          <div class="primary--text font-weight-bold-x text-h5">
+            {{ item.symbolA }}
+          </div>
         </template>
         <template v-slot:item.lastPrice="{ item }">
           <div :class="item.priceStatus == -1 ? 'red--text' : 'success--text'">
-          <!-- {{item.priceStatus}} -->
+            <!-- {{item.priceStatus}} -->
             $ {{ item.lastPrice | price }}
           </div>
         </template>
-        
+
         <template v-slot:item.lastPrice2="{ item }">
           <div :class="item.priceStatus == -1 ? 'red--text' : 'success--text'">
             ฿ {{ (item.lastPrice * usd) | price }}
@@ -36,8 +50,15 @@
         </template>
 
         <template v-slot:item.priceChangePercent="{ item }">
-          <v-chip small label text-color="white" :color="parseFloat(item.priceChangePercent) >= 0? 'green': 'red'">
-            <v-icon v-if="parseFloat(item.priceChangePercent) >= 0" x-small left>mdi-arrow-up-bold</v-icon>
+          <v-chip
+            small
+            label
+            text-color="white"
+            :color="parseFloat(item.priceChangePercent) >= 0 ? 'green' : 'red'"
+          >
+            <v-icon v-if="parseFloat(item.priceChangePercent) >= 0" x-small left
+              >mdi-arrow-up-bold</v-icon
+            >
             <v-icon v-else x-small left>mdi-arrow-down-bold</v-icon>
             {{ item.priceChangePercent }} %
           </v-chip>
@@ -61,6 +82,22 @@
             {{item.hit}}
           </div>
         </template> -->
+
+        <template v-slot:item.chart="{ item }">
+          <v-sparkline
+            :value="item.chart"
+            :gradient="
+              parseFloat(item.priceChangePercent) >= 0
+                ? ['green', '#7fff00']
+                : ['yellow', 'red']
+            "
+            :smooth="5"
+            stroke-linecap="round"
+            gradient-direction="top"
+            type="trend"
+            :fill="true"
+          ></v-sparkline>
+        </template>
 
         <template v-slot:item.action="{ item }">
           <v-btn
@@ -150,6 +187,9 @@ export default {
       currencys: [],
       tickers: [],
       connection: null,
+      test: {
+        value: [],
+      },
 
       /* START: DATA TABLE */
       isLoading: true,
@@ -160,15 +200,16 @@ export default {
           // align: "start",
           filterable: true,
           value: "symbolA",
-          width: "200",
+          width: "150",
         },
         { text: "ราคา", value: "lastPrice" },
         { text: "บาท", value: "lastPrice2" },
-        { text: "24h", value: "priceChangePercent" },
-        { text: "High", value: "highPrice" },
-        { text: "Low", value: "lowPrice" },
+        { text: "24H", value: "priceChangePercent", filterable: false },
+        { text: "2 Day", value: "chart", width: "250" },
+        { text: "High", value: "highPrice", width: "100" },
+        { text: "Low", value: "lowPrice", width: "100" },
         // { text: "Hit", value: "hit" },
-        { text: "Volume", value: "volume" },
+        { text: "Volume", value: "volume", width: "120" },
         { text: "", value: "action" },
       ],
       desserts: [],
@@ -203,13 +244,27 @@ export default {
             symbolA: t.symbol.substring(t.symbol.length - 4, 0),
             symbolB: t.symbol.substr(-4),
             oldPrice: 0,
+            chart: [],
             ...t,
           };
         });
       this.desserts = usdtList;
       this.isLoading = false;
 
+      this.getCandles();
       this.streem();
+    },
+
+    async getCandles() {
+      await this.desserts.forEach(async (t, i) => {
+        const c = await this.$binance.candles({
+          symbol: t.symbol, // "ETHUSDT",
+          interval: "30m",
+          limit: 96,
+        });
+        const list = c.map((d) => parseFloat(d.close));
+        this.desserts[i].chart = list;
+      });
     },
 
     getOpenOrders() {
@@ -267,6 +322,7 @@ export default {
                 low: "",
                 priceStatus: 0,
                 hit: 0,
+                chart: [],
               };
             });
           this.tickers = eth;
@@ -289,14 +345,15 @@ export default {
         tickers = tickers.filter((t) => t.s.substr(t.s.length - 4) == "USDT");
 
         let currencys = this.desserts;
-        
+
         tickers.forEach((t) => {
           currencys.forEach((g_ticker, g_i) => {
             if (t.s == g_ticker.symbol) {
               const oldPrice = parseFloat(currencys[g_i].lastPrice);
 
-              if ((oldPrice) == parseFloat(t.c)) currencys[g_i].priceStatus = 0;
-              else if (oldPrice < parseFloat(t.c)) currencys[g_i].priceStatus = 1;
+              if (oldPrice == parseFloat(t.c)) currencys[g_i].priceStatus = 0;
+              else if (oldPrice < parseFloat(t.c))
+                currencys[g_i].priceStatus = 1;
               else currencys[g_i].priceStatus = -1;
 
               // const oldHit = parseInt(currencys[g_i].hit);
@@ -330,6 +387,15 @@ export default {
         console.log("onopen", event);
         // console.log("Successfully connected to the echo websocket server...");
       };
+    },
+  },
+
+  computed: {
+    countDown() {
+      const c = this.desserts.filter(
+        (f) => parseFloat(f.priceChangePercent) < 0
+      );
+      return c.length;
     },
   },
 };
