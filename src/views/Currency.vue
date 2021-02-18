@@ -3,18 +3,23 @@
     <v-card>
       <v-card-title>
         <v-row>
-          <v-col cols="4">
-            <v-icon color="green" left>mdi-arrow-up-bold</v-icon>
-            <span class="green--text">{{ desserts.length - countDown }}</span>
-            <span class="mx-5"></span>
-            <v-icon color="red" left>mdi-arrow-down-bold</v-icon>
-            <span class="red--text">{{ countDown }}</span>
+          <v-col cols="12" lg="4">
+            <v-chip color="green" label class="mr-5">
+              <v-icon color="white" left>mdi-arrow-up-bold</v-icon>
+              <span class="white--text">{{ desserts.length - countDown }}</span>
+            </v-chip>
+
+            <v-chip color="red" label>
+              <v-icon color="white" left>mdi-arrow-down-bold</v-icon>
+              <span class="white--text">{{ countDown }}</span>
+            </v-chip>
+            
           </v-col>
-          <v-col cols="4">
-            <small class="primary--text mr-5">กราฟ</small>
+          <v-col cols="12" lg="4">
+            <small class="primary--text mr-5">Chart</small>
             <v-btn
               color="primary"
-              :outlined="chartType == '1H' ? false : true"
+              :outlined="chart.type == '1H' ? false : true"
               class="black--text mr-2"
               x-small
               @click="getCandles('1m', 60, '1H')"
@@ -22,7 +27,7 @@
             >
             <v-btn
               color="primary"
-              :outlined="chartType == '6H' ? false : true"
+              :outlined="chart.type == '6H' ? false : true"
               class="black--text mr-2"
               x-small
               @click="getCandles('5m', 72, '6H')"
@@ -30,7 +35,7 @@
             >
             <v-btn
               color="primary"
-              :outlined="chartType == '1D' ? false : true"
+              :outlined="chart.type == '1D' ? false : true"
               class="black--text mr-2"
               x-small
               @click="getCandles('30m', 48, '1D')"
@@ -38,7 +43,7 @@
             >
             <v-btn
               color="primary"
-              :outlined="chartType == '2D' ? false : true"
+              :outlined="chart.type == '2D' ? false : true"
               class="black--text mr-2"
               x-small
               @click="getCandles('30m', 96, '2D')"
@@ -46,7 +51,7 @@
             >
             <v-btn
               color="primary"
-              :outlined="chartType == '7D' ? false : true"
+              :outlined="chart.type == '7D' ? false : true"
               class="black--text mr-2"
               x-small
               @click="getCandles('4h', 42, '7D')"
@@ -54,7 +59,7 @@
             >
             <v-btn
               color="primary"
-              :outlined="chartType == '1M' ? false : true"
+              :outlined="chart.type == '1M' ? false : true"
               class="black--text mr-2"
               x-small
               @click="getCandles('12h', 60, '1M')"
@@ -62,14 +67,14 @@
             >
             <v-btn
               color="primary"
-              :outlined="chartType == '1Y' ? false : true"
+              :outlined="chart.type == '1Y' ? false : true"
               class="black--text mr-2"
               x-small
               @click="getCandles('1M', 12, '1Y')"
               >1Y</v-btn
             >
           </v-col>
-          <v-col cols="4">
+          <v-col cols="12" lg="4">
             <v-text-field
               v-model="search"
               append-icon="mdi-magnify"
@@ -98,7 +103,7 @@
           </div>
         </template>
         <template v-slot:item.lastPrice="{ item }">
-          <div :class="item.priceStatus == -1 ? 'red--text' : 'success--text'">
+          <div :class="item.priceStatus == -1 ? 'red--text' : 'success--text'" class="text-h6">
             <!-- {{item.priceStatus}} -->
             $ {{ item.lastPrice | price }}
           </div>
@@ -146,25 +151,31 @@
         </template> -->
 
         <template v-slot:item.chart="{ item }">
-          <v-sparkline
-            :value="item.chart"
-            :gradient="
-              parseFloat(item.chart[item.chart.length - 1]) >=
-              parseFloat(item.chart[0])
-                ? ['green', '#7fff00']
-                : ['yellow', 'red']
-            "
-            :smooth="5"
-            stroke-linecap="round"
-            gradient-direction="top"
-            type="trend"
-            :fill="true"
-          ></v-sparkline>
+            <v-sparkline
+              :value="item.chart"
+              :gradient="
+                parseFloat(item.chart[item.chart.length - 1]) >=
+                parseFloat(item.chart[0])
+                  ? ['green', '#7fff00']
+                  : ['yellow', 'red']
+              "
+              :smooth="5"
+              stroke-linecap="round"
+              gradient-direction="top"
+              type="trend"
+              :fill="true"
+            ></v-sparkline>
+            <div class="blue-grey--text darken-4 text-center" style="font-size:12px;">
+              <small class="float-left">{{parseFloat(item.chart[0])| price}}</small>
+              <v-chip :color="parseFloat(item.chart[item.chart.length - 1]) >= parseFloat(item.chart[0])?'green':'red'" x-small class="mb-1">
+                {{parseInt(((parseFloat(item.chart[item.chart.length - 1]) - parseFloat(item.chart[0])) / parseFloat(item.chart[0])) * 100)}} %
+              </v-chip>
+              <small class="float-right">{{parseFloat(item.chart[item.chart.length - 1])| price}}</small>
+            </div>
         </template>
 
         <template v-slot:item.action="{ item }">
           <v-btn
-            small
             text
             color="primary"
             link
@@ -174,67 +185,14 @@
               item.symbolA +
               '_USDT?layout=pro&ref=ODBA01CZ'
             "
-            title="เทรด"
+            title="Chart"
           >
-            <v-icon left>mdi-chart-areaspline</v-icon> เทรด
+            <v-icon left>mdi-chart-areaspline</v-icon> Chart
           </v-btn>
         </template>
       </v-data-table>
     </v-card>
 
-    <!-- currency -->
-    <!-- <v-row dense> -->
-    <!-- md="4"
-        xl="3"
-        lg="2" -->
-    <!-- <v-col cols="6" v-for="(currency, i) in currencys" :key="i"> -->
-    <!-- <b href="https://www.w3schools.com" target="_blank"> -->
-    <!-- <v-card
-          class="pa-5"
-          link
-          :href="
-            'https://www.binance.com/th/trade/' +
-            currency.symbolA +
-            '_USDT?layout=pro'
-          "
-          target="_blank"
-        >
-          <v-row dense class="text-center">
-            <v-col cols="4" align-self="center">
-              <div class="font-weight-medium primary--text">
-                {{ currency.symbolA }}
-              </div>
-              <div>{{ currency.symbol }}</div>
-            </v-col>
-            <v-col cols="8">
-              <v-row dense class="text-right">
-                <v-col>
-                  <div
-                    class="font-weight-black"
-                    :class="
-                      currency.priceStatus == -1 ? 'red--text' : 'success--text'
-                    "
-                  >
-                    $ {{ currency.price | price }}
-                  </div>
-                </v-col>
-                <v-col>
-                  <div class="font-weight-thin secondary--text">
-                    ฿ {{ (currency.price * usd) | price }}
-                  </div>
-                </v-col>
-                <v-col>
-                  {{currency.priceChangePercent}} %
-                </v-col>
-              </v-row>
-            </v-col>
-          </v-row>
-        </v-card> -->
-
-    <!-- </a>  -->
-
-    <!-- </v-col> -->
-    <!-- </v-row> -->
   </div>
 </template>
 
@@ -250,7 +208,10 @@ export default {
       currencys: [],
       tickers: [],
       connection: null,
-      chartType: "1D",
+      chart: {
+        type: "1D",
+        loading: true,
+      },
       test: {
         value: [],
       },
@@ -260,21 +221,21 @@ export default {
       search: "",
       headers: [
         {
-          text: "เหรียญ",
+          text: "NAME",
           // align: "start",
           filterable: true,
           value: "symbolA",
-          width: "150",
+          width: "200",
         },
-        { text: "ราคา", value: "lastPrice" },
-        { text: "บาท", value: "lastPrice2" },
-        { text: "24H", value: "priceChangePercent", width: "50" },
-        { text: "2 Day", value: "chart", width: "250", filterable: false },
-        { text: "High", value: "highPrice", width: "110" },
-        { text: "Low", value: "lowPrice", width: "110" },
+        { text: "PRICE", value: "lastPrice" },
+        { text: "THB", value: "lastPrice2" },
+        { text: "24H", value: "priceChangePercent" },
+        { text: "", value: "chart", width: "200", filterable: false },
+        { text: "HIGH", value: "highPrice" },
+        { text: "LOW", value: "lowPrice" },
         // { text: "Hit", value: "hit" },
-        { text: "Volume", value: "volume", width: "120" },
-        { text: "", value: "action" },
+        { text: "Volume", value: "volume" },
+        { text: "", value: "action", width: "50" },
       ],
       desserts: [],
       /* END: DATA TABLE */
@@ -326,7 +287,8 @@ export default {
     },
 
     async getCandles(interval, limit, type) {
-      this.chartType = type;
+      this.chart.loading = true;
+      this.chart.type = type;
       await this.desserts.forEach(async (t, i) => {
         const c = await this.$binance.candles({
           symbol: t.symbol, // "ETHUSDT",
@@ -336,6 +298,7 @@ export default {
         const list = c.map((d) => parseFloat(d.close));
         this.desserts[i].chart = list;
       });
+      this.chart.loading = false;
     },
 
     getOpenOrders() {
