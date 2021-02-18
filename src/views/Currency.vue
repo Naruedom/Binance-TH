@@ -3,19 +3,80 @@
     <v-card>
       <v-card-title>
         <v-row>
-          <v-col cols="6">
+          <v-col cols="4">
             <v-icon color="green" left>mdi-arrow-up-bold</v-icon>
             <span class="green--text">{{ desserts.length - countDown }}</span>
             <span class="mx-5"></span>
             <v-icon color="red" left>mdi-arrow-down-bold</v-icon>
             <span class="red--text">{{ countDown }}</span>
           </v-col>
-          <v-col cols="6">
+          <v-col cols="4">
+            <small class="primary--text mr-5">กราฟ</small>
+            <v-btn
+              color="primary"
+              :outlined="chartType == '1H' ? false : true"
+              class="black--text mr-2"
+              x-small
+              @click="getCandles('1m', 60, '1H')"
+              >1H</v-btn
+            >
+            <v-btn
+              color="primary"
+              :outlined="chartType == '6H' ? false : true"
+              class="black--text mr-2"
+              x-small
+              @click="getCandles('5m', 72, '6H')"
+              >6H</v-btn
+            >
+            <v-btn
+              color="primary"
+              :outlined="chartType == '1D' ? false : true"
+              class="black--text mr-2"
+              x-small
+              @click="getCandles('30m', 48, '1D')"
+              >1D</v-btn
+            >
+            <v-btn
+              color="primary"
+              :outlined="chartType == '2D' ? false : true"
+              class="black--text mr-2"
+              x-small
+              @click="getCandles('30m', 96, '2D')"
+              >2D</v-btn
+            >
+            <v-btn
+              color="primary"
+              :outlined="chartType == '7D' ? false : true"
+              class="black--text mr-2"
+              x-small
+              @click="getCandles('4h', 42, '7D')"
+              >7D</v-btn
+            >
+            <v-btn
+              color="primary"
+              :outlined="chartType == '1M' ? false : true"
+              class="black--text mr-2"
+              x-small
+              @click="getCandles('12h', 60, '1M')"
+              >1M</v-btn
+            >
+            <v-btn
+              color="primary"
+              :outlined="chartType == '1Y' ? false : true"
+              class="black--text mr-2"
+              x-small
+              @click="getCandles('1M', 12, '1Y')"
+              >1Y</v-btn
+            >
+          </v-col>
+          <v-col cols="4">
             <v-text-field
               v-model="search"
               append-icon="mdi-magnify"
               label="Search"
               dense
+              outlined
+              color="primary"
               single-line
               hide-details
             ></v-text-field>
@@ -29,7 +90,7 @@
         :items="desserts"
         :search="search"
         :hide-default-footer="false"
-        :items-per-page="15"
+        :items-per-page="50"
       >
         <template v-slot:item.symbolA="{ item }">
           <div class="primary--text font-weight-bold-x text-h5">
@@ -47,6 +108,7 @@
           <div :class="item.priceStatus == -1 ? 'red--text' : 'success--text'">
             ฿ {{ (item.lastPrice * usd) | price }}
           </div>
+          <!-- <small><pre>{{item}}</pre></small> -->
         </template>
 
         <template v-slot:item.priceChangePercent="{ item }">
@@ -87,7 +149,8 @@
           <v-sparkline
             :value="item.chart"
             :gradient="
-              parseFloat(item.priceChangePercent) >= 0
+              parseFloat(item.chart[item.chart.length - 1]) >=
+              parseFloat(item.chart[0])
                 ? ['green', '#7fff00']
                 : ['yellow', 'red']
             "
@@ -187,6 +250,7 @@ export default {
       currencys: [],
       tickers: [],
       connection: null,
+      chartType: "1D",
       test: {
         value: [],
       },
@@ -238,7 +302,13 @@ export default {
       // console.log("dailyStats", data);
 
       const usdtList = data
-        .filter((t) => t.symbol.substr(t.symbol.length - 4) == "USDT")
+        .filter(
+          (t) =>
+            t.symbol.substr(t.symbol.length - 4) == "USDT" &&
+            parseFloat(t.askPrice) != 0 &&
+            t.symbol.substr(t.symbol.length - 8) != "DOWNUSDT" &&
+            t.symbol.substr(t.symbol.length - 6) != "UPUSDT"
+        ) /* คัดเฉพาะ คู่เหรียญ usdt ที่ไม่ 404 */
         .map((t) => {
           return {
             symbolA: t.symbol.substring(t.symbol.length - 4, 0),
@@ -251,16 +321,17 @@ export default {
       this.desserts = usdtList;
       this.isLoading = false;
 
-      this.getCandles();
+      this.getCandles("30m", 48, "1D");
       this.streem();
     },
 
-    async getCandles() {
+    async getCandles(interval, limit, type) {
+      this.chartType = type;
       await this.desserts.forEach(async (t, i) => {
         const c = await this.$binance.candles({
           symbol: t.symbol, // "ETHUSDT",
-          interval: "30m",
-          limit: 96,
+          interval,
+          limit,
         });
         const list = c.map((d) => parseFloat(d.close));
         this.desserts[i].chart = list;
