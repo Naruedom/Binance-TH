@@ -1,8 +1,11 @@
 <template>
   <div class="currency pa-5 pt-1">
-    <v-row class="mb-2">
-      <v-col cols="6">
-         <v-chip color="green" label class="mr-5">
+    <Login/>
+    <v-card>
+      <v-card-title>
+        <v-row>
+          <v-col cols="12" lg="4">
+            <v-chip color="green" label class="mr-5">
               <v-icon color="white" left>mdi-arrow-up-bold</v-icon>
               <span class="white--text">{{ desserts.length - countDown }}</span>
             </v-chip>
@@ -11,27 +14,9 @@
               <v-icon color="white" left>mdi-arrow-down-bold</v-icon>
               <span class="white--text">{{ countDown }}</span>
             </v-chip>
-      </v-col>
-      <v-col cols="6" class="text-right">
-        
-        <FormProfile v-if="isLogin"/>
-        
-        <v-btn
-          v-if="!isLogin"
-          color="primary"
-          outlined
-          type="button"
-          @click="loginGoogle"
-          >Google Login</v-btn
-        >
-        <v-btn v-else color="white" outlined @click="logout()">Logout</v-btn>
-      </v-col>
-    </v-row>
-    <!-- <pre>{{ accountBNB }}</pre> -->
-    <v-card>
-      <v-card-title>
-        <v-row>
-          <v-col cols="12" lg="9">
+            
+          </v-col>
+          <v-col cols="12" lg="4">
             <small class="primary--text mr-5">Chart</small>
             <v-btn
               color="primary"
@@ -90,7 +75,7 @@
               >1Y</v-btn
             >
           </v-col>
-          <v-col cols="12" lg="3">
+          <v-col cols="12" lg="4">
             <v-text-field
               v-model="search"
               append-icon="mdi-magnify"
@@ -108,33 +93,18 @@
         :loading="isLoading"
         loading-text="Loading..."
         :headers="headers"
-        :items="dessertsComputed"
+        :items="desserts"
         :search="search"
         :hide-default-footer="false"
         :items-per-page="50"
       >
         <template v-slot:item.symbolA="{ item }">
           <div class="primary--text font-weight-bold-x text-h5">
-            <v-btn
-              v-if="isLogin"
-              icon
-              :color="
-                user && user.favorites && user.favorites.includes(item.symbol)
-                  ? 'primary'
-                  : 'grey'
-              "
-              @click="favorite(item.symbol)"
-            >
-              <v-icon>mdi-star</v-icon>
-            </v-btn>
             {{ item.symbolA }}
           </div>
         </template>
         <template v-slot:item.lastPrice="{ item }">
-          <div
-            :class="item.priceStatus == -1 ? 'red--text' : 'success--text'"
-            class="text-h6"
-          >
+          <div :class="item.priceStatus == -1 ? 'red--text' : 'success--text'" class="text-h6">
             <!-- {{item.priceStatus}} -->
             $ {{ item.lastPrice | price }}
           </div>
@@ -169,62 +139,40 @@
           <div class="red--text">$ {{ item.lowPrice | price }}</div>
         </template>
 
-        <!-- <template v-slot:item.volume="{ item }">
+        <template v-slot:item.volume="{ item }">
           <div class="grey--text">
             {{ item.volume | price }}
           </div>
-        </template> -->
-
-        <template v-slot:item.freePrice="{ item }">
-          <div v-if="item.free > 0" class="text-right">
-            <v-chip small text-color="black" color="primary"
-              >$ {{ item.freePrice | price }}</v-chip
-            >
-            <div class="primary--text text-right mr-2">
-              <v-icon x-small color="primary">mdi-alpha-c-circle</v-icon>
-              {{ item.free | price }}
-            </div>
-          </div>
         </template>
 
+        <!-- <template v-slot:item.hit="{ item }">
+          <div class="grey--text">
+            {{item.hit}}
+          </div>
+        </template> -->
+
         <template v-slot:item.chart="{ item }">
-          <v-sparkline
-            :value="item.chart"
-            :gradient="
-              parseFloat(item.chart[item.chart.length - 1]) >=
-              parseFloat(item.chart[0])
-                ? ['green', '#7fff00']
-                : ['yellow', 'red']
-            "
-            :smooth="5"
-            stroke-linecap="round"
-            gradient-direction="top"
-            type="trend"
-            :fill="true"
-          ></v-sparkline>
-          <div
-            class="blue-grey--text darken-4 text-center"
-            style="font-size: 12px"
-          >
-            <small class="float-left">{{
-              parseFloat(item.chart[0]) | price
-            }}</small>
-            <v-chip
-              x-small
-              class="mb-1"
-              :color="
+            <v-sparkline
+              :value="item.chart"
+              :gradient="
                 parseFloat(item.chart[item.chart.length - 1]) >=
                 parseFloat(item.chart[0])
-                  ? 'green'
-                  : 'red'
+                  ? ['green', '#7fff00']
+                  : ['yellow', 'red']
               "
-            >
-              {{ parseFloat(calChart(item.chart)).toFixed(2) }} %
-            </v-chip>
-            <small class="float-right">{{
-              parseFloat(item.chart[item.chart.length - 1]) | price
-            }}</small>
-          </div>
+              :smooth="5"
+              stroke-linecap="round"
+              gradient-direction="top"
+              type="trend"
+              :fill="true"
+            ></v-sparkline>
+            <div class="blue-grey--text darken-4 text-center" style="font-size:12px;">
+              <small class="float-left">{{parseFloat(item.chart[0])| price}}</small>
+              <v-chip :color="parseFloat(item.chart[item.chart.length - 1]) >= parseFloat(item.chart[0])?'green':'red'" x-small class="mb-1">
+                {{parseInt(((parseFloat(item.chart[item.chart.length - 1]) - parseFloat(item.chart[0])) / parseFloat(item.chart[0])) * 100)}} %
+              </v-chip>
+              <small class="float-right">{{parseFloat(item.chart[item.chart.length - 1])| price}}</small>
+            </div>
         </template>
 
         <template v-slot:item.action="{ item }">
@@ -245,16 +193,18 @@
         </template>
       </v-data-table>
     </v-card>
+
   </div>
 </template>
 
 <script>
 // import Binance from "binance-api-node";
-import FormProfile from '@/components/FormProfile';
-
+import Login from '@/components/Login';
 export default {
   name: "Currency",
-  components: { FormProfile },
+  components: {
+    Login
+  },
   data() {
     return {
       usd: 30,
@@ -288,21 +238,29 @@ export default {
         { text: "HIGH", value: "highPrice" },
         { text: "LOW", value: "lowPrice" },
         // { text: "Hit", value: "hit" },
-        // { text: "Volume", value: "volume" },
-        { text: "", value: "freePrice" },
+        { text: "Volume", value: "volume" },
         { text: "", value: "action", width: "50" },
       ],
       desserts: [],
       /* END: DATA TABLE */
-
-      accountBNB: [],
     };
   },
   mounted() {
-    this.getAccountBNB();
-    this.dailyStats();
+    // this.getUSD();
+    // this.getTrades();
+    // this.dailyStats();
+    // this.getTicker();
+    // this.getOpenOrders();
   },
   methods: {
+    /* getUSD() {
+      this.$http({
+        method: "get",
+        url: `https://api.bitkub.com/api/market/symbols`,
+        // data: {symbol: "ETH"},
+      })
+    }, */
+
     async dailyStats() {
       // const d = await this.$binance.trades({ symbol: 'ETHBTC' });
       const data = await this.$binance.dailyStats();
@@ -328,8 +286,8 @@ export default {
       this.desserts = usdtList;
       this.isLoading = false;
 
-      await this.getCandles("30m", 48, "1D");
-      await this.streem();
+      this.getCandles("30m", 48, "1D");
+      this.streem();
     },
 
     async getCandles(interval, limit, type) {
@@ -345,6 +303,41 @@ export default {
         this.desserts[i].chart = list;
       });
       this.chart.loading = false;
+    },
+
+    getOpenOrders() {
+      // const url = 'https://api.binance.com/api/v3/allOrders?symbol=ETHBTC&timestamp=1612509948544&signature=1e3cb6f02da48bc450ac7f2bdc83848fd50d576f125fffe3bdf1723f526a4dfc';
+      // this.$http({
+      //   method: "get",
+      //   headers: { "X-MBX-APIKEY": this.$config.setting.apiKey },
+      //   url: url,
+      // })
+      //   .then((res) => {
+      //     console.log("res", res);
+      //   })
+      //   .catch((error) => {
+      //     console.log("error", error);
+      //   });
+      // this.$binance
+      //   .allOrders({ symbol: "ETHBTC" })
+      //   .then((res) => {
+      //     console.log("res", res);
+      //   })
+      //   .catch((error) => {
+      //     console.log("error", error);
+      //   });
+    },
+
+    getTicker() {
+      // let client = Binance(
+      //   {
+      //     apiKey: this.$config.setting.apiKey,
+      //     apiSecret: this.$config.setting.secretKey,
+      //   }
+      // );
+      // client.ws.ticker('ETHBTC', ticker => {
+      //   console.log('ticker',ticker)
+      // })
     },
 
     getTrades() {
@@ -371,6 +364,7 @@ export default {
               };
             });
           this.tickers = eth;
+          // this.streem();
         })
         .catch((error) => {
           console.log("error", error);
@@ -384,6 +378,8 @@ export default {
 
       this.connection.onmessage = (event) => {
         let tickers = JSON.parse(event.data);
+        // console.log(tickers);
+        // return;
         tickers = tickers.filter((t) => t.s.substr(t.s.length - 4) == "USDT");
 
         let currencys = this.desserts;
@@ -398,10 +394,26 @@ export default {
                 currencys[g_i].priceStatus = 1;
               else currencys[g_i].priceStatus = -1;
 
+              // const oldHit = parseInt(currencys[g_i].hit);
+              // let hit = 0;
+              // if(currencys[g_i].priceStatus==1) {
+              //   if(oldHit<0)
+              //     hit = 1;
+              //   else hit++;
+              // }
+              // else if(currencys[g_i].priceStatus==-1) {
+              //   if(oldHit>0)
+              //     hit = -1;
+              //   else hit--;
+              // }
+
               currencys[g_i].lastPrice = t.c;
               currencys[g_i].highPrice = t.h;
               currencys[g_i].lowPrice = t.l;
               currencys[g_i].priceChangePercent = t.P;
+              // currencys[g_i].hit = hit;
+
+              // console.log(this.tickers[g_i]);
             }
           });
         });
@@ -411,64 +423,8 @@ export default {
 
       this.connection.onopen = (event) => {
         console.log("onopen", event);
+        // console.log("Successfully connected to the echo websocket server...");
       };
-    },
-
-    getAccountBNB() {
-      this.$http({
-        method: "get",
-        url: `${this.$config.setting.functions}/api/account`,
-        // data: {symbol: "ETH"},
-      })
-        .then((res) => {
-          const data = res.data;
-          // this.accountBNB = data.balances;
-          this.accountBNB = data.balances.filter((d) => parseFloat(d.free) > 0);
-          console.log("res", res);
-        })
-        .catch((error) => {
-          console.log("error", error);
-        });
-    },
-
-    getAccountFree(symbol) {
-      let o = this.accountBNB.find((d) => d.asset == symbol);
-      return o ? o.free : 0;
-    },
-
-    favorite(symbol) {
-      let list = [...this.user.favorites];
-      if (list.includes(symbol)) {
-        const index = list.indexOf(symbol);
-        if (index > -1) {
-          list.splice(index, 1);
-        }
-      } else {
-        list.push(symbol);
-      }
-
-      this.$db
-        .collection("users")
-        .doc(this.auth.uid)
-        .update({ favorites: list })
-        .then(() => {
-          this.$store.dispatch("updateProfileData");
-        });
-    },
-
-    calChart(d) {
-      return parseFloat(
-        ((parseFloat(d[d.length - 1]) - parseFloat(d[0])) / parseFloat(d[0])) *
-          100
-      );
-    },
-
-    loginGoogle() {
-      this.$store.dispatch("userLoginGoogle");
-    },
-
-    logout() {
-      this.$store.dispatch("userLogout");
     },
   },
 
@@ -478,27 +434,6 @@ export default {
         (f) => parseFloat(f.priceChangePercent) < 0
       );
       return c.length;
-    },
-
-    isLogin() {
-      return this.$store.getters.isLogin;
-    },
-
-    auth() {
-      return this.$store.getters.getUser;
-    },
-
-    user() {
-      return this.$store.getters.getProfile;
-    },
-
-    dessertsComputed() {
-      let set = this.desserts.map((d) => {
-        // return { ...d, free: this.getAccountFree(d.symbolA) };
-        let free = this.getAccountFree(d.symbolA);
-        return { ...d, free, freePrice: free * d.lastPrice };
-      });
-      return set;
     },
   },
 };

@@ -8,8 +8,12 @@ import axios from 'axios'
 import config from "../config.js";
 import numeral from 'numeral'
 import Binance from 'binance-api-node';
+import firebase from 'firebase/app'
 
 /* ---- */
+firebase.initializeApp(config.setting.firebaseConfig)
+Vue.prototype.$db = firebase.firestore();
+Vue.prototype.$firebase = firebase;
 
 Vue.prototype.$config = config;
 Vue.prototype.$http = axios;
@@ -17,9 +21,9 @@ Vue.prototype.$http = axios;
 // const time = new Date().getTime();
 Vue.prototype.$binance = Binance(
 
-/* //////////////////////////////////////// */
+  /* //////////////////////////////////////// */
 
-// let client = Binance(
+  // let client = Binance(
   {
     apiKey: config.setting.apiKey,
     apiSecret: config.setting.secretKey,
@@ -59,10 +63,11 @@ Vue.filter("price", (value) => {
 
 Vue.config.prouctionTip = false;
 
-
-new Vue({
-  router,
-  store,
-  vuetify,
-  render: h => h(App)
-}).$mount('#app')
+store.dispatch('checkAuth').then(() => {
+  new Vue({
+    router,
+    store,
+    vuetify,
+    render: h => h(App)
+  }).$mount('#app')
+});
