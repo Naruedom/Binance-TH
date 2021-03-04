@@ -2,6 +2,8 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import firebase from 'firebase'
 import imageUser from '@/assets/images/user.png';
+import $http from '@/plugins/axios';
+import config from "../../config";
 
 Vue.use(Vuex)
 
@@ -24,7 +26,7 @@ export default new Vuex.Store({
   },
   getters: {
     isLogin(state) {
-      return state.user && state.user.uid;
+      return state.user && state.user.uid ? true : false;
     },
     appTitle(state) {
       return state.appName
@@ -90,6 +92,8 @@ export default new Vuex.Store({
 
         if (auth) {
 
+          $http.defaults.headers.common['app_token'] = auth.uid;
+
           const userDB = {
             uid: auth.uid,
             name: auth.displayName,
@@ -118,12 +122,12 @@ export default new Vuex.Store({
           });
 
           commit('setUser', auth);
-          console.log('auth yes');
+          // console.log('auth yes');
           commit('setLoading', false);
 
         }
         else {
-          console.log('auth no');
+          // console.log('auth no');
           commit('setAccountEmpty');
         }
       })

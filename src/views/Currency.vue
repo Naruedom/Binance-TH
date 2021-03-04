@@ -2,20 +2,19 @@
   <div class="currency pa-5 pt-1">
     <v-row class="mb-2">
       <v-col cols="6">
-         <v-chip color="green" label class="mr-5">
-              <v-icon color="white" left>mdi-arrow-up-bold</v-icon>
-              <span class="white--text">{{ desserts.length - countDown }}</span>
-            </v-chip>
+        <v-chip color="green" label class="mr-5">
+          <v-icon color="white" left>mdi-arrow-up-bold</v-icon>
+          <span class="white--text">{{ desserts.length - countDown }}</span>
+        </v-chip>
 
-            <v-chip color="red" label>
-              <v-icon color="white" left>mdi-arrow-down-bold</v-icon>
-              <span class="white--text">{{ countDown }}</span>
-            </v-chip>
+        <v-chip color="red" label>
+          <v-icon color="white" left>mdi-arrow-down-bold</v-icon>
+          <span class="white--text">{{ countDown }}</span>
+        </v-chip>
       </v-col>
       <v-col cols="6" class="text-right">
-        
-        <FormProfile v-if="isLogin"/>
-        
+        <FormProfile v-if="isLogin" />
+
         <v-btn
           v-if="!isLogin"
           color="primary"
@@ -177,9 +176,10 @@
 
         <template v-slot:item.freePrice="{ item }">
           <div v-if="item.free > 0" class="text-right">
-            <v-chip small text-color="black" color="primary"
-              >$ {{ item.freePrice | price }}</v-chip
-            >
+            <v-chip small text-color="black" color="primary">
+              <span v-if="isET" class="mr-2">มึงมี</span>
+              $ {{ item.freePrice | price }}
+            </v-chip>
             <div class="primary--text text-right mr-2">
               <v-icon x-small color="primary">mdi-alpha-c-circle</v-icon>
               {{ item.free | price }}
@@ -250,7 +250,7 @@
 
 <script>
 // import Binance from "binance-api-node";
-import FormProfile from '@/components/FormProfile';
+import FormProfile from "@/components/FormProfile";
 
 export default {
   name: "Currency",
@@ -299,7 +299,6 @@ export default {
     };
   },
   mounted() {
-    this.getAccountBNB();
     this.dailyStats();
   },
   methods: {
@@ -354,7 +353,7 @@ export default {
         // data: {symbol: "ETH"},
       })
         .then((res) => {
-          console.log("res", res);
+          // console.log("res", res);
           const eth = res.data
             .filter((t) => t.symbol.substr(t.symbol.length - 4) == "TUSD")
             .map((t) => {
@@ -410,7 +409,7 @@ export default {
       };
 
       this.connection.onopen = (event) => {
-        console.log("onopen", event);
+        // console.log("onopen", event);
       };
     },
 
@@ -424,7 +423,7 @@ export default {
           const data = res.data;
           // this.accountBNB = data.balances;
           this.accountBNB = data.balances.filter((d) => parseFloat(d.free) > 0);
-          console.log("res", res);
+          // console.log("res", res);
         })
         .catch((error) => {
           console.log("error", error);
@@ -472,6 +471,18 @@ export default {
     },
   },
 
+  watch: {
+    // whenever question changes, this function will run
+    isLogin: function (newStatus, oldStatus) {
+      // console.log("isLogin", newStatus, oldStatus);
+      if (!oldStatus && newStatus) {
+        this.getAccountBNB();
+      } else if (oldStatus && !newStatus) {
+        this.accountBNB = [];
+      }
+    },
+  },
+
   computed: {
     countDown() {
       const c = this.desserts.filter(
@@ -482,6 +493,10 @@ export default {
 
     isLogin() {
       return this.$store.getters.isLogin;
+    },
+
+    isET() {
+      this.isLogin && this.user.email == 'e@e.com';
     },
 
     auth() {

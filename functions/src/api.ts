@@ -1,23 +1,51 @@
 import * as functions from 'firebase-functions';
-// import * as admin from 'firebase-admin';
+import * as admin from 'firebase-admin';
 
 const express = require('express');
 const cors = require('cors');
 const app = express();
-// const db = admin.firestore();
-// const userRef = db.collection("users");
+const db = admin.firestore();
+const userRef = db.collection("users");
 const Binance = require('binance-api-node').default
 
-const client = Binance({
-  apiKey: '',
-  apiSecret: '',
-})
+let client = Binance();
+
+// const client = Binance({
+//   apiKey: 'D9R4CNme3UZVQHED4hIDjuFVlYV9l7gj5UYvI9yNa8LjRzJgBjyb8VBtt7iKl734',
+//   apiSecret: 'qHlyq5RsJGRMp1ndykI6jGCHxQLlx81aevgpJVMAM2K15sIkONW9X1Wdi5lRLdWx',
+// })
 
 app.use(cors({ origin: true }));
+
+
+app.use(async (req: any, res: any, next: any) => {
+
+  const user_uid = req.header("app_token");
+
+  if(!user_uid)
+    res.status(500).send('app_token!')
+
+  const doc = await userRef.doc(user_uid).get();
+
+  if (doc.exists) {
+    const user: any = doc.data();
+    client = Binance({ apiKey: user.apiKey, apiSecret: user.secretKey });
+    next();
+  }
+  else
+    res.status(500).send('app_token!')
+
+
+})
 
 app.get('/', (req: any, res: any) => {
   return res.status(200).send('API GET working.');
 });
+
+// app.get('/req', (req: any, res: any) => {
+//   let header = req.header("app_token");
+//   return res.status(200).send(header);
+// });
 
 app.get('/account', (req: any, res: any) => {
   client.accountInfo()
